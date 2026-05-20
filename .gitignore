@@ -18,3 +18,7 @@ node_modules
 dist/
 .vite/
 .DS_Store
+
+# Serverless Framework
+.serverless/
+backend/.serverless/

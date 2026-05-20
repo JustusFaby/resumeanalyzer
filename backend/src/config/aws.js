@@ -5,9 +5,12 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 
 const region = process.env.AWS_REGION || 'us-east-1'
 const hasStaticCredentials = Boolean(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY)
+const isLambdaRuntime = Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME)
 
 const sharedClientConfig = {
   region,
+  // In Lambda, the SDK uses the IAM execution role automatically.
+  // Only inject static credentials for local development.
   ...(hasStaticCredentials
     ? {
         credentials: {
@@ -30,5 +33,5 @@ export const textractClient = new TextractClient(sharedClientConfig)
 export const dynamoDbClient = new DynamoDBClient(sharedClientConfig)
 
 export function isAwsConfigured() {
-  return hasStaticCredentials
+  return hasStaticCredentials || isLambdaRuntime
 }
