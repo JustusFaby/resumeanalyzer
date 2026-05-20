@@ -36,12 +36,12 @@ graph TD
 
     %% Data Flow Connections
     UI -->|1. Authenticates| CognitoAuth
-    UI -->|2. HTTP Request (with JWT)| APIGW
+    UI -->|2. HTTP Request with JWT| APIGW
     APIGW -->|3. Event Proxy| ExpressLambda
     ExpressLambda -->|4. Validates JWT Token| CognitoAuth
     ExpressLambda -->|5. Uploads Resume PDF| S3
     ExpressLambda -->|6. Extracts Text from PDF| Textract
-    ExpressLambda -->|7. Evaluates Resume & JD| Groq
+    ExpressLambda -->|7. Evaluates Resume and JD| Groq
     ExpressLambda -->|8. Persists Analysis Report| DynamoDB
     ExpressLambda -->|9. Returns Report JSON| UI
 ```
