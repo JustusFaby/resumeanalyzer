@@ -9,9 +9,9 @@ const isLambdaRuntime = Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME)
 
 const sharedClientConfig = {
   region,
-  // In Lambda, the SDK uses the IAM execution role automatically.
+  // In Lambda, let the SDK auto-detect IAM role credentials (includes session token).
   // Only inject static credentials for local development.
-  ...(hasStaticCredentials
+  ...(!isLambdaRuntime && hasStaticCredentials
     ? {
         credentials: {
           accessKeyId: process.env.AWS_ACCESS_KEY_ID,
