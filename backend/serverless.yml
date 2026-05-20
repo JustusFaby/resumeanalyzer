@@ -12,7 +12,7 @@ provider:
   architecture: arm64
   environment:
     GROQ_API_KEY: ${env:GROQ_API_KEY}
-    GROQ_MODEL: ${env:GROQ_MODEL, 'llama-3.1-8b-instant'}
+    GROQ_MODEL: ${env:GROQ_MODEL, 'llama-3.3-70b-specdec'}
     DYNAMODB_TABLE_NAME: !Ref ResumeAnalyzerTable
     DYNAMODB_REPORT_KEY: reportId
     S3_BUCKET_NAME: !Ref ResumeUploadsBucket
