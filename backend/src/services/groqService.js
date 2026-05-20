@@ -31,37 +31,55 @@ function normalizeStringArray(value, limit) {
     .slice(0, limit)
 }
 
+function clampScore(value) {
+  const num = Number(value)
+  if (isNaN(num)) return 0
+  return Math.max(0, Math.min(100, Math.round(num)))
+}
+
 export async function generateAnalysisWithGroq({
   resumeText,
   jobDescription,
   targetRole,
-  analysisSnapshot,
 }) {
   if (!groq) {
     return null
   }
 
   const prompt = [
-    'You are an expert resume analyst. Respond ONLY with valid JSON.',
-    'Return this exact JSON shape (no Markdown, no extra keys):',
+    'You are an expert ATS (Applicant Tracking System) resume analyst.',
+    'Analyze the resume against the job description and target role.',
+    'Respond ONLY with valid JSON. No Markdown, no extra text, no code fences.',
+    '',
+    'Return this exact JSON shape:',
     '{',
+    '  "overallScore": number,',
+    '  "atsScore": number,',
     '  "summary": "string",',
+    '  "matchedKeywords": ["string"],',
+    '  "missingKeywords": ["string"],',
+    '  "extractedSkills": ["string"],',
     '  "strengths": ["string"],',
     '  "weaknesses": ["string"],',
     '  "recommendations": ["string"]',
     '}',
-    'Constraints:',
-    '- summary: 1 sentence',
-    '- strengths: 2-4 items',
-    '- weaknesses: 2-4 items',
-    '- recommendations: 3-6 items',
+    '',
+    'Scoring rules:',
+    '- atsScore (0-100): How well the resume matches ATS keyword requirements from the job description. Consider keyword presence, density, exact phrasing matches, and role-specific terminology.',
+    '- overallScore (0-100): Holistic resume quality score factoring in ATS match, skill relevance, experience alignment, formatting clarity, and impact statements.',
+    '- matchedKeywords: Important keywords/phrases from the job description that ARE found in the resume (max 20).',
+    '- missingKeywords: Important keywords/phrases from the job description that are NOT in the resume (max 20).',
+    '- extractedSkills: Technical and professional skills detected in the resume (max 15).',
+    '- summary: 2-3 sentence analysis overview.',
+    '- strengths: 2-4 specific strengths of this resume for the target role.',
+    '- weaknesses: 2-4 specific weaknesses or gaps.',
+    '- recommendations: 3-6 actionable improvement suggestions.',
     '',
     `Target role: ${targetRole}`,
-    `ATS score: ${analysisSnapshot.atsScore}`,
-    `Missing keywords: ${analysisSnapshot.missingKeywords.join(', ')}`,
-    `Top job keywords: ${analysisSnapshot.topJobKeywords.join(', ')}`,
-    `Resume text: ${resumeText}`,
-    `Job description: ${jobDescription}`,
+    '',
+    `Job description:\n${jobDescription}`,
+    '',
+    `Resume text:\n${resumeText}`,
   ].join('\n')
 
   try {
@@ -69,7 +87,7 @@ export async function generateAnalysisWithGroq({
       model,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.2,
-      max_tokens: 600,
+      max_tokens: 1200,
     })
 
     const text = response?.choices?.[0]?.message?.content || ''
@@ -80,7 +98,12 @@ export async function generateAnalysisWithGroq({
     }
 
     return {
+      overallScore: clampScore(parsed.overallScore),
+      atsScore: clampScore(parsed.atsScore),
       summary: typeof parsed.summary === 'string' ? parsed.summary.trim() : '',
+      matchedKeywords: normalizeStringArray(parsed.matchedKeywords, 20),
+      missingKeywords: normalizeStringArray(parsed.missingKeywords, 20),
+      extractedSkills: normalizeStringArray(parsed.extractedSkills, 15),
       strengths: normalizeStringArray(parsed.strengths, 4),
       weaknesses: normalizeStringArray(parsed.weaknesses, 4),
       recommendations: normalizeStringArray(parsed.recommendations, 6),
